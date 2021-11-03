@@ -1,5 +1,5 @@
-[Environment]::SetEnvironmentVariable("AWS_ACCESS_KEY_ID",  "AKIAYWUZVITHROFJL5K5", "Process")
-[Environment]::SetEnvironmentVariable("AWS_SECRET_ACCESS_KEY", "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", "Process")
+[Environment]::SetEnvironmentVariable("AWS_ACCESS_KEY_ID",  "**************", "Process")
+[Environment]::SetEnvironmentVariable("AWS_SECRET_ACCESS_KEY", "**************", "Process")
 [Environment]::SetEnvironmentVariable("AWS_DEFAULT_REGION", "eu-central-1", "Process")
 
 mkdir ./publish
