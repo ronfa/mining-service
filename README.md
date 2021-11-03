@@ -16,9 +16,12 @@ The following projects are included in the solution:
 | ------ | ------ |
 | MiningService.Core | Holds all interfaces and business logic |
 | MiningService.Infrastructure | Holds infrastructure implementations such as DynamoDb |
-| MiningService.WebApi | web api exposing a GET and POST endpoints. Examples below. |
+| MiningService.PostMine | Web api POST endpoint to start a mining job |
+| MiningService.GetMine | Web api GET endpoint to retrieve status of a given job |
 | MiningService.Infrastructure.Tests | Unit test project for testing the infrastructure layer |
 
-## WebApi
+## MiningService.PostMine
+
+## MiningService.GetMine
 
 
