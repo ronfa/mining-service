@@ -5,7 +5,6 @@ using Amazon.DynamoDBv2.DataModel;
 using Amazon.Runtime.CredentialManagement;
 using Amazon.SecurityToken;
 using Amazon.SecurityToken.Model;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MiningService.Infrastructure.Model;
 
@@ -19,12 +18,10 @@ namespace MiningService.Infrastructure
     public class DynamoDbClient : IDynamoDbClient
     {
         private MiningDbConfigModel _dbConfig;
-        private ILogger _logger;
 
-        public DynamoDbClient(IOptions<MiningDbConfigModel> dbConfig, ILogger logger)
+        public DynamoDbClient(IOptions<MiningDbConfigModel> dbConfig)
         {
-            _dbConfig = dbConfig.Value;
-            _logger = logger;
+            _dbConfig = new MiningDbConfigModel() { ServiceUrl = "http://localhost:8000", TablePrefix = "miningjobs" };
         }
 
         public IDynamoDBContext CreateDbContext()
@@ -48,9 +45,8 @@ namespace MiningService.Infrastructure
         [ExcludeFromCodeCoverage]
         private AmazonDynamoDBClient GetLocalClient(AmazonDynamoDBConfig config)
         {
-            _logger.LogInformation("Create dynamodb client for local env");
             Credentials localCredentials = null;
-            if (new CredentialProfileStoreChain().TryGetProfile("playpenprofile", out CredentialProfile credProfile))
+            if (new CredentialProfileStoreChain().TryGetProfile("parknow-playpen", out CredentialProfile credProfile))
             {
                 var tokenService = new AmazonSecurityTokenServiceClient(credProfile.Options.AccessKey, credProfile.Options.SecretKey);
                 AssumeRoleRequest request = new AssumeRoleRequest

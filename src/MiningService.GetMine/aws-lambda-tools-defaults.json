@@ -5,10 +5,12 @@
     "dotnet lambda help",
     "All the command line options for the Lambda command can be specified in this file."
   ],
-  "profile": "default",
-  "region": "us-west-2",
+  "profile": "parknow-automation",
+  "region": "",
   "configuration": "Release",
   "framework": "netcoreapp3.1",
-  "function-handler": "MiningService.WebApi::MiningService.WebApi.WebApiHandler::GetHandler",
-  "function-name": "MiningService.WebApi.WebApiHandler::GetHandler"
+  "function-runtime": "dotnetcore3.1",
+  "function-memory-size": 256,
+  "function-timeout": 30,
+  "function-handler": "MiningService.GetMine::MiningService.GetMine.Function::FunctionHandler"
 }

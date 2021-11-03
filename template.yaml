@@ -98,21 +98,10 @@ Parameters:
     MinValue: '5'
     MaxValue: '10000'
     ConstraintDescription: must be between 5 and 10000
-  ApiKeyAuthorizerFunctionName:
-    Type: String
-    Default: "apikeyauthorizer"
-    Description: Api Key Authorizer function name
   ApiGatewayDomainName:
     Type: String
     Description: S3 bucket name to log to the access logs for the bucket created within S3BucketTemplateUrl
-  PostEndpointLambdaFunctionName:
-    Type: String
-    Default: "startmining"
-    Description: Local variable. This definition is needed since the function name will be both used in the lambda function definition and lambda log setup nested stack.  
-  GetEndpointLambdaFunctionName:
-    Type: String
-    Default: "getresults"
-    Description: Local variable. This definition is needed since the function name will be both used in the lambda function definition and lambda log setup nested stack.  
+    Default: "miningservice"
   
 Conditions:
   IsProdEnvironment: !Equals [!Ref Environment, prod]
@@ -154,44 +143,27 @@ Resources:
   MiningTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Join [ '-', [!Ref Environment, !Ref Platform, !Ref System, !Ref Subsystem, !Ref TableName] ]
+      TableName: "miningjobs"
       AttributeDefinitions:
         -
-          AttributeName: "MiningId"
+          AttributeName: "JobId"
           AttributeType: "S"
       KeySchema:
         -
-          AttributeName: "MiningId"
+          AttributeName: "JobId"
           KeyType: "HASH"
       ProvisionedThroughput:
         ReadCapacityUnits: !Ref 'ReadCapacityUnits'
         WriteCapacityUnits: !Ref 'WriteCapacityUnits'
 
-  DevEnvironmentAuthWebApiReplacement:
-    Type: AWS::Serverless::Api
-    Condition: DevEnv
-    Properties:
-      StageName: !Ref Environment
-      EndpointConfiguration: REGIONAL
-
   WebApi:
     Type: AWS::Serverless::Api
     Properties:
-      StageName: !Ref Environment
+      StageName: 'Dev'
       EndpointConfiguration: REGIONAL
       Cors:
         AllowMethods: "'GET,POST'"
       TracingEnabled: false
-#      Auth:
-#        DefaultAuthorizer: ApiKeyAuthorizerBloxx
-#        Authorizers:
-#          ApiKeyAuthorizerBloxx:
-#            FunctionPayloadType: TOKEN
-#            FunctionArn: !GetAtt ApiKeyAuthorizerFunction.Arn
-#            Identity:
-#              Header: Authorization
-#              ValidationExpression: ^(ApiKey) [-0-9a-zA-Z\._]*$
-#              ReauthorizeEvery: 0
 
   PostEndpointFunction:
     Type: AWS::Serverless::Function
@@ -199,47 +171,23 @@ Resources:
       Role: !Sub ${APILambdaRoleStack.Outputs.RoleArn}
       Runtime: dotnetcore3.1
       MemorySize: 1024
-      Timeout: 20
-      ReservedConcurrentExecutions: 2
-      CodeUri: ./artifacts/MiningService.WebApi.zip
-      Handler: "MiningService.WebApi::MiningService.WebApi.WebApiHandler::PostHandler"
-      FunctionName: !Join [ '-', [!Ref Environment, !Ref Platform, !Ref System, !Ref Subsystem, !Ref PostEndpointLambdaFunctionName] ]
+      Timeout: 10
+      ReservedConcurrentExecutions: 1
+      CodeUri: ./artifacts/MiningService.PostMine.zip
+      Handler: "MiningService.PostMine::MiningService.PostMine.Function::FunctionHandler"
+      FunctionName: 'miningservice-postmine'
       Environment:
         Variables:
-          Application__Name: !Ref PostEndpointLambdaFunctionName
-      Tracing: !Ref LambdaTracingMode
-      VpcConfig: !If
-        - HasVpcAccess
-        - SecurityGroupIds: !Ref SecurityGroupIds
-          SubnetIds: !Ref SubnetIds
-        - !Ref "AWS::NoValue"
+          Application__Name: 'miningservice-postmine'
       Events:
-        AddIp:
+        AddMining:
           Type: Api
           Properties:
             RestApiId: !Ref WebApi
             Path: /mine
             Method: POST
             Auth:
-              Authorizer: ApiKeyAuthorizerBloxx
-        AddIpOptions:
-          Type: Api 
-          Properties:
-            RestApiId: !Ref WebApi
-            Path: /mine
-            Method: OPTIONS
-            Auth:
-              Authorizer: NONE  
-
-  PostEndpointFunctionLogSetup:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      Parameters:
-        Environment: !Ref Environment
-        FunctionName: !Join [ '-', [!Ref Environment, !Ref Platform, !Ref System, !Ref Subsystem, !Ref PostEndpointLambdaFunctionName] ]
-        Platform: !Ref Platform
-      TemplateURL: !Ref LambdaLogSetupStackUrl
-      TimeoutInMinutes: 2
+              Authorizer: NONE
 
   GetEndpointFunction:
     Type: AWS::Serverless::Function
@@ -249,18 +197,12 @@ Resources:
       MemorySize: 1024
       Timeout: 20
       ReservedConcurrentExecutions: 2
-      CodeUri: ./artifacts/MiningService.WebApi.zip
-      Handler: "MiningService.WebApi::MiningService.WebApi.WebApiHandler::GetHandler"
-      FunctionName: !Join [ '-', [!Ref Environment, !Ref Platform, !Ref System, !Ref Subsystem, !Ref GetEndpointLambdaFunctionName] ]
+      CodeUri: ./artifacts/MiningService.GetMine.zip
+      Handler: "MiningService.GetMine::MiningService.GetMine.Function::FunctionHandler"
+      FunctionName: 'miningservice-getmine'
       Environment:
         Variables:
-          Application__Name: !Ref GetEndpointLambdaFunctionName
-      Tracing: !Ref LambdaTracingMode
-      VpcConfig: !If
-        - HasVpcAccess
-        - SecurityGroupIds: !Ref SecurityGroupIds
-          SubnetIds: !Ref SubnetIds
-        - !Ref "AWS::NoValue"
+          Application__Name: 'miningservice-getmine'
       Events:
         GetIp:
           Type: Api
@@ -269,17 +211,7 @@ Resources:
             Path: /mine
             Method: GET
             Auth:
-              Authorizer: ApiKeyAuthorizerBloxx
-
-  GetEndpointFunctionLogSetup:
-    Type: AWS::CloudFormation::Stack
-    Properties:
-      Parameters:
-        Environment: !Ref Environment
-        FunctionName: !Join [ '-', [!Ref Environment, !Ref Platform, !Ref System, !Ref Subsystem, !Ref GetEndpointLambdaFunctionName] ]
-        Platform: !Ref Platform
-      TemplateURL: !Ref LambdaLogSetupStackUrl
-      TimeoutInMinutes: 2
+              Authorizer: NONE
 
   DnsRecord:
     Type: AWS::CloudFormation::Stack
@@ -320,9 +252,6 @@ Outputs:
   MiningTableOutput:
     Value: !GetAtt MiningTable.Arn
     Description: Database ARN
-  ApiKeyAuthorizerFunctionOutput:
-    Value: !Ref ApiKeyAuthorizerFunction
-    Description: Lamba Auth API Key
   DnsRecordOutput:
     Value: !Ref DnsRecord
     Description: Dns Record

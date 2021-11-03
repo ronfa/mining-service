@@ -15,21 +15,15 @@ namespace MiningService.Core.Services
 
     public class MiningService : IMiningService
     {
-        private ILogger _logger;
         private IMiningRepository _miningRepo;
 
-        private string GetLogPrefix(string method) => $"{nameof(MiningService)} | {method}";
-
-        public MiningService(IMiningRepository miningRepo, ILogger logger)
+        public MiningService(IMiningRepository miningRepo)
         {
-            _logger = logger;
             _miningRepo = miningRepo;
         }
 
         public async Task<(MiningResponse Result, StatusCodes ErrorCodes)> StoreMiningJob(StartMiningRequest request)
         {
-            var logPrefix = GetLogPrefix(nameof(StoreMiningJob));
-
             // Generate new job id
             var jobId = Guid.NewGuid().ToString();
 
@@ -40,7 +34,6 @@ namespace MiningService.Core.Services
             };
 
             var resp = await _miningRepo.Save(db);
-            _logger.LogInformation($"{logPrefix} Job successfully saved. JobId: {jobId}");
             return (new MiningResponse(resp), StatusCodes.NoError);
         }
 
@@ -69,13 +62,10 @@ namespace MiningService.Core.Services
 
         public async Task<(MiningResponse Result, StatusCodes ErrorCodes)> DeleteIpAddress(string ipAddress, string username, string reason)
         {
-            var logPrefix = GetLogPrefix(nameof(DeleteIpAddress));
             var ipDb = await GetJobAsDbModel(ipAddress);
             if (ipDb.Result == null) return (null, ipDb.ErrorCodes);
 
             await _miningRepo.Delete(ipDb.Result);
-
-            _logger.LogInformation($"{logPrefix} IP {ipAddress} is deleted from db by: {username} Reason: {reason}");
             return (null, StatusCodes.NoError);
         }
 

@@ -3,7 +3,7 @@ Version: "1.0"
 Description: >
   Mining service
 Platform: local
-System: frauddetection
+System: system
 Subsystem: mining
 Owner: ron
 Runtimes:

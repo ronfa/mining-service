@@ -9,14 +9,12 @@ namespace MiningService.Infrastructure.Tests
 {
     public class DynamoDbClientTests
     {
-        Mock<ILogger> _logger;
         DynamoDbClient dynamoDbClient;
         private const string _serviceUrl = "https://local";
         private const string _tablePrefix = "prefix";
 
         public DynamoDbClientTests()
         {
-            _logger = new Mock<ILogger>();
         }
 
         [Fact()]
@@ -27,7 +25,7 @@ namespace MiningService.Infrastructure.Tests
                 ServiceUrl = _serviceUrl,
                 TablePrefix = _tablePrefix
             };
-            dynamoDbClient = new DynamoDbClient(Options.Create(model), _logger.Object);
+            dynamoDbClient = new DynamoDbClient(Options.Create(model));
 
             var context = dynamoDbClient.CreateDbContext();
             Assert.NotNull(context);
@@ -37,7 +35,7 @@ namespace MiningService.Infrastructure.Tests
         public void DynamoDbClient_CreateClient_WithInvalidConfig_Test()
         {
             var model = new MiningDbConfigModel();
-            dynamoDbClient = new DynamoDbClient(Options.Create(model), _logger.Object);
+            dynamoDbClient = new DynamoDbClient(Options.Create(model));
             Assert.Throws<MissingMemberException>(() => dynamoDbClient.CreateDbContext());
         }
     }
