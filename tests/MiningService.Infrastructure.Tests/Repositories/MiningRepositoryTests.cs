@@ -17,22 +17,25 @@ namespace MiningService.Infrastructure.Tests.Repositories
         Mock<IDynamoDBContext> _dynamoDbContext;
 
         const string TestJobId = "1.1.1.1";
-        DateTime TestLastModified = DateTime.UtcNow;
+        readonly DateTime TestLastModified = DateTime.UtcNow;
 
         public MiningRepositoryTests()
         {
             _dynamoDbContext = new Mock<IDynamoDBContext>();
 
-            _dynamoDbContext.Setup(x => x.SaveAsync(It.Is<MiningDbModel>(x => x.JobId == TestJobId), It.IsAny<CancellationToken>()))
-                .Returns(Task.FromResult(new PutItemResponse() { HttpStatusCode = System.Net.HttpStatusCode.OK }))
+            _dynamoDbContext.Setup(x =>
+                    x.SaveAsync(It.Is<MiningDbModel>(x => x.JobId == TestJobId), It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult(new PutItemResponse() {HttpStatusCode = System.Net.HttpStatusCode.OK}))
                 .Verifiable();
 
-            _dynamoDbContext.Setup(x => x.LoadAsync<MiningDbModel>(It.Is<object>(x => x.Equals(TestJobId)), It.IsAny<CancellationToken>()))
-                .Returns(Task.FromResult(new MiningDbModel() { JobId = TestJobId, CreateDate = TestLastModified }))
+            _dynamoDbContext.Setup(x =>
+                    x.LoadAsync<MiningDbModel>(It.Is<object>(x => x.Equals(TestJobId)), It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult(new MiningDbModel() {JobId = TestJobId, CreateDate = TestLastModified}))
                 .Verifiable();
 
-            _dynamoDbContext.Setup(x => x.DeleteAsync(It.Is<MiningDbModel>(x => x.JobId == TestJobId), It.IsAny<CancellationToken>()))
-                .Returns(Task.FromResult(new MiningDbModel() { JobId = TestJobId, CreateDate = TestLastModified }))
+            _dynamoDbContext.Setup(x =>
+                    x.DeleteAsync(It.Is<MiningDbModel>(x => x.JobId == TestJobId), It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult(new MiningDbModel() {JobId = TestJobId, CreateDate = TestLastModified}))
                 .Verifiable();
 
             _dynamoDbClient = new Mock<IDynamoDbClient>();
@@ -42,7 +45,7 @@ namespace MiningService.Infrastructure.Tests.Repositories
         }
 
         [Fact()]
-        public async Task GetIpAddressTest()
+        public async Task GetMiningJob()
         {
             var resp = await _repo.Get(TestJobId);
 
@@ -54,7 +57,7 @@ namespace MiningService.Infrastructure.Tests.Repositories
         }
 
         [Fact()]
-        public async Task SaveTest()
+        public async Task SaveMiningJob()
         {
             var req = new MiningDbModel()
             {
@@ -70,7 +73,7 @@ namespace MiningService.Infrastructure.Tests.Repositories
         }
 
         [Fact()]
-        public async Task DeleteIpAddressTest()
+        public async Task DeleteMiningJob()
         {
             var req = new MiningDbModel()
             {
