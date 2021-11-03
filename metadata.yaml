@@ -1,0 +1,16 @@
+---
+Version: "1.0"
+Description: >
+  Mining service
+Platform: local
+System: frauddetection
+Subsystem: mining
+Owner: ron
+Runtimes:
+  - dotnetocre3.1
+JiraReference: None
+ApplicationTypes:
+  - webapi
+  - adapter
+FQDN: mining.sparklogic.nl
+CustomerFacing: false

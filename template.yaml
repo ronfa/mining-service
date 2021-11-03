@@ -1,0 +1,331 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Mining Service
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:  
+      - local
+      - dev
+      - test
+      - sit
+      - preprod
+      - prod
+    Description: Environment
+  Platform:
+    Type: String
+    Default: default
+    AllowedValues:  
+      - default
+    Description: platform information
+  System:
+    Type: String
+    Description: System information
+  Subsystem:
+    Type: String
+    Description: Subsystem information
+  Version:
+    Type: String
+    Description: Version information
+  Owner:
+    Type: String
+    Description: Version information
+  AppEnvironment:
+    Type: String
+    Description: This is the application environment value that will be set as the environment variable value for application__environment. This parameter is introduced because there is a mismatch between AWS Infra environment "prod" and .NET Application environment "Production"
+  LambdaTracingMode:
+    Type: String
+    Description: Tracing mode for all the lambda functions in the solution.
+    Default: PassThrough
+  LambdaVpcAccess:
+      Type: String
+      Default: true
+      AllowedValues:
+      - false
+      - true
+      Description: Extends or not the Lambda's execution IAM Role with VPC access (the ec2:CreateNetworkInterface, ec2:DescribeNetworkInterfaces and ec2:DeleteNetworkInterface permissions)
+  SecurityGroupIds: 
+      Type: CommaDelimitedList
+      Description: Security Group IDs that Lambda will use
+      Default: ''
+  SubnetIds: 
+      Type: CommaDelimitedList
+      Description: VPC Subnet IDs that Lambda will use (min 2 for HA)
+      Default: ''
+  LambdaRoleTemplateUrl:
+    Type: String
+    Description: Lambda Role creation nested stack reference. This should be a constant value defined in deployment system (octodeploy). All nested stack definitions are stored in dedicated bucket in px-automation account.
+    Default: https://s3.amazonaws.com/px-automation-cloudformation-stacks/templates/lambdaRole/latest/lambdaRole.yaml
+  LambdaLogSetupStackUrl:
+    Type: String
+    Description: Lambda Logging Setup nested stack reference. This should be a constant value defined in deployment system (octodeploy). All nested stack definitions are stored in dedicated bucket in px-automation account.
+    Default: https://s3.amazonaws.com/px-automation-cloudformation-stacks/templates/lambdaLogConfig/latest/lambdaLogConfig.yaml
+  ACMCertificateStackUrl:
+    Type: String
+    Description: ACM template creation nested stack reference. This should be a constant value defined in deployment system (octodeploy). All nested stack definitions are stored in dedicated bucket in px-automation account.
+    Default: https://s3.amazonaws.com/px-automation-cloudformation-stacks/templates/acm/latest/acm.yaml
+  Route53StackUrl:
+    Type: String
+    Description: Route53 template creation nested stack reference. This should be a constant value defined in deployment system (octodeploy). All nested stack definitions are stored in dedicated bucket in px-automation account.
+    Default: https://s3.amazonaws.com/px-automation-cloudformation-stacks/templates/route53/latest/route53.yaml
+  QueueTemplateUrl: 
+    Type: String
+    Description: Queue creation nested stack reference. This should be a constant value defined in deployment system (octodeploy). All nested stack definitions are stored in dedicated bucket in px-automation account.
+    Default: https://s3.amazonaws.com/px-automation-cloudformation-stacks/templates/queue/latest/queue.yaml
+  GatewayRoleTemplateUrl: 
+    Type: String
+    Description: Queue creation nested stack reference. This should be a constant value defined in deployment system (octodeploy). All nested stack definitions are stored in dedicated bucket in px-automation account.
+    Default: https://s3.amazonaws.com/px-automation-cloudformation-stacks/templates/gatewayRole/latest/gatewayRole.yaml
+  KMSKey:
+    Type: String
+    Description: Api Gateway Domain Certificate Arn
+  TableName:
+    Type: String
+    Default: "miningjobs"
+  ReadCapacityUnits:
+    Description: Provisioned read throughput
+    Type: Number
+    Default: '10'
+    MinValue: '5'
+    MaxValue: '10000'
+    ConstraintDescription: must be between 5 and 10000
+  WriteCapacityUnits:
+    Description: Provisioned write throughput
+    Type: Number
+    Default: '10'
+    MinValue: '5'
+    MaxValue: '10000'
+    ConstraintDescription: must be between 5 and 10000
+  ApiKeyAuthorizerFunctionName:
+    Type: String
+    Default: "apikeyauthorizer"
+    Description: Api Key Authorizer function name
+  ApiGatewayDomainName:
+    Type: String
+    Description: S3 bucket name to log to the access logs for the bucket created within S3BucketTemplateUrl
+  PostEndpointLambdaFunctionName:
+    Type: String
+    Default: "startmining"
+    Description: Local variable. This definition is needed since the function name will be both used in the lambda function definition and lambda log setup nested stack.  
+  GetEndpointLambdaFunctionName:
+    Type: String
+    Default: "getresults"
+    Description: Local variable. This definition is needed since the function name will be both used in the lambda function definition and lambda log setup nested stack.  
+  
+Conditions:
+  IsProdEnvironment: !Equals [!Ref Environment, prod]
+  IsProdOrPreprodEnvironment: !Or [!Equals [!Ref Environment, prod], !Equals [!Ref Environment, preprod]]
+  DevEnv: !Or [!Equals [!Ref Environment, dev], !Equals [!Ref Environment, local]]
+  XRayEnabled: !Or [ !Equals [!Ref LambdaTracingMode, 'active'], !Equals [!Ref LambdaTracingMode, 'Active'] ]
+  HasVpcAccess:  !Equals [!Ref LambdaVpcAccess, 'true']
+
+Globals:
+  Function:
+    Environment:
+      Variables:
+        Application__Version: !Ref Version
+        Application__Environment: !Ref AppEnvironment
+        Application__MachineName: Lambda
+        Application__System: !Ref System
+        Application__Subsystem: !Ref Subsystem
+        Application__Platform: !Ref Platform
+        XrayTracing__Enabled: !If [XRayEnabled, "true", "false"]
+        NEW_RELIC_USE_DT_WRAPPER: 'true'
+        NEW_RELIC_ACCOUNT_ID: !If [IsProdOrPreprodEnvironment, "357918", "2753636"]
+        NEW_RELIC_TRUSTED_ACCOUNT_KEY: !If [IsProdOrPreprodEnvironment, "357918", "2753636"]
+
+Resources:
+
+  APILambdaRoleStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Ref LambdaRoleTemplateUrl
+      TimeoutInMinutes: 2
+      Parameters:
+        Environment: !Ref Environment
+        Platform: !Ref Platform
+        System: !Ref System
+        Subsystem: !Ref Subsystem
+        KmsKeyArn: !Ref KMSKey
+        LambdaVPCaccess: !Ref LambdaVpcAccess
+
+  MiningTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Join [ '-', [!Ref Environment, !Ref Platform, !Ref System, !Ref Subsystem, !Ref TableName] ]
+      AttributeDefinitions:
+        -
+          AttributeName: "MiningId"
+          AttributeType: "S"
+      KeySchema:
+        -
+          AttributeName: "MiningId"
+          KeyType: "HASH"
+      ProvisionedThroughput:
+        ReadCapacityUnits: !Ref 'ReadCapacityUnits'
+        WriteCapacityUnits: !Ref 'WriteCapacityUnits'
+
+  DevEnvironmentAuthWebApiReplacement:
+    Type: AWS::Serverless::Api
+    Condition: DevEnv
+    Properties:
+      StageName: !Ref Environment
+      EndpointConfiguration: REGIONAL
+
+  WebApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref Environment
+      EndpointConfiguration: REGIONAL
+      Cors:
+        AllowMethods: "'GET,POST'"
+      TracingEnabled: false
+#      Auth:
+#        DefaultAuthorizer: ApiKeyAuthorizerBloxx
+#        Authorizers:
+#          ApiKeyAuthorizerBloxx:
+#            FunctionPayloadType: TOKEN
+#            FunctionArn: !GetAtt ApiKeyAuthorizerFunction.Arn
+#            Identity:
+#              Header: Authorization
+#              ValidationExpression: ^(ApiKey) [-0-9a-zA-Z\._]*$
+#              ReauthorizeEvery: 0
+
+  PostEndpointFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Role: !Sub ${APILambdaRoleStack.Outputs.RoleArn}
+      Runtime: dotnetcore3.1
+      MemorySize: 1024
+      Timeout: 20
+      ReservedConcurrentExecutions: 2
+      CodeUri: ./artifacts/MiningService.WebApi.zip
+      Handler: "MiningService.WebApi::MiningService.WebApi.WebApiHandler::PostHandler"
+      FunctionName: !Join [ '-', [!Ref Environment, !Ref Platform, !Ref System, !Ref Subsystem, !Ref PostEndpointLambdaFunctionName] ]
+      Environment:
+        Variables:
+          Application__Name: !Ref PostEndpointLambdaFunctionName
+      Tracing: !Ref LambdaTracingMode
+      VpcConfig: !If
+        - HasVpcAccess
+        - SecurityGroupIds: !Ref SecurityGroupIds
+          SubnetIds: !Ref SubnetIds
+        - !Ref "AWS::NoValue"
+      Events:
+        AddIp:
+          Type: Api
+          Properties:
+            RestApiId: !Ref WebApi
+            Path: /mine
+            Method: POST
+            Auth:
+              Authorizer: ApiKeyAuthorizerBloxx
+        AddIpOptions:
+          Type: Api 
+          Properties:
+            RestApiId: !Ref WebApi
+            Path: /mine
+            Method: OPTIONS
+            Auth:
+              Authorizer: NONE  
+
+  PostEndpointFunctionLogSetup:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      Parameters:
+        Environment: !Ref Environment
+        FunctionName: !Join [ '-', [!Ref Environment, !Ref Platform, !Ref System, !Ref Subsystem, !Ref PostEndpointLambdaFunctionName] ]
+        Platform: !Ref Platform
+      TemplateURL: !Ref LambdaLogSetupStackUrl
+      TimeoutInMinutes: 2
+
+  GetEndpointFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Role: !Sub ${APILambdaRoleStack.Outputs.RoleArn}
+      Runtime: dotnetcore3.1
+      MemorySize: 1024
+      Timeout: 20
+      ReservedConcurrentExecutions: 2
+      CodeUri: ./artifacts/MiningService.WebApi.zip
+      Handler: "MiningService.WebApi::MiningService.WebApi.WebApiHandler::GetHandler"
+      FunctionName: !Join [ '-', [!Ref Environment, !Ref Platform, !Ref System, !Ref Subsystem, !Ref GetEndpointLambdaFunctionName] ]
+      Environment:
+        Variables:
+          Application__Name: !Ref GetEndpointLambdaFunctionName
+      Tracing: !Ref LambdaTracingMode
+      VpcConfig: !If
+        - HasVpcAccess
+        - SecurityGroupIds: !Ref SecurityGroupIds
+          SubnetIds: !Ref SubnetIds
+        - !Ref "AWS::NoValue"
+      Events:
+        GetIp:
+          Type: Api
+          Properties:
+            RestApiId: !Ref WebApi
+            Path: /mine
+            Method: GET
+            Auth:
+              Authorizer: ApiKeyAuthorizerBloxx
+
+  GetEndpointFunctionLogSetup:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      Parameters:
+        Environment: !Ref Environment
+        FunctionName: !Join [ '-', [!Ref Environment, !Ref Platform, !Ref System, !Ref Subsystem, !Ref GetEndpointLambdaFunctionName] ]
+        Platform: !Ref Platform
+      TemplateURL: !Ref LambdaLogSetupStackUrl
+      TimeoutInMinutes: 2
+
+  DnsRecord:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Ref Route53StackUrl
+      TimeoutInMinutes: 2
+      Parameters:
+        Name: !Ref ApiGatewayDomainName
+        Value: !GetAtt GatewayDomain.RegionalDomainName
+
+  Certificate:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Ref ACMCertificateStackUrl
+      TimeoutInMinutes: 30
+      Parameters:
+        DomainName: !Ref ApiGatewayDomainName
+
+  GatewayDomain:
+    Type: AWS::ApiGateway::DomainName
+    Properties:
+      EndpointConfiguration:
+        Types: [REGIONAL]
+      RegionalCertificateArn: !GetAtt Certificate.Outputs.CertificateArn
+      DomainName: !Ref ApiGatewayDomainName
+
+  BasePathMapping:
+    DependsOn:
+      - GatewayDomain
+      - WebApiStage
+    Type: AWS::ApiGateway::BasePathMapping
+    Properties:
+      DomainName: !Ref ApiGatewayDomainName
+      RestApiId: !Ref WebApi
+      Stage: !Ref Environment
+
+Outputs:
+  MiningTableOutput:
+    Value: !GetAtt MiningTable.Arn
+    Description: Database ARN
+  ApiKeyAuthorizerFunctionOutput:
+    Value: !Ref ApiKeyAuthorizerFunction
+    Description: Lamba Auth API Key
+  DnsRecordOutput:
+    Value: !Ref DnsRecord
+    Description: Dns Record
+  GatewayDomainOutput:
+    Value: !Ref GatewayDomain
+    Description: Gateway domain

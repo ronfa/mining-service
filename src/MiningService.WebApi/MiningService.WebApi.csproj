@@ -1,0 +1,72 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+		<PropertyGroup>
+				<TargetFramework>netcoreapp3.1</TargetFramework>
+				<GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+				<AWSProjectType>Lambda</AWSProjectType>
+				<!-- This property makes the build directory similar to a publish directory and helps the AWS .NET Lambda Mock Test Tool find project dependencies. -->
+				<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+		</PropertyGroup>
+		<ItemGroup>
+				<PackageReference Include="Amazon.Lambda.Core" Version="2.0.0" />
+				<PackageReference Include="Amazon.Lambda.Serialization.SystemTextJson" Version="2.1.0" />
+				<PackageReference Include="Amazon.Lambda.APIGatewayEvents" Version="2.4.0" />
+				<PackageReference Include="AWSSDK.Core" Version="3.7.0.38" />
+				<PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="3.7.0.1" />
+				<PackageReference Include="AWSSDK.SimpleSystemsManagement" Version="3.7.3.19" />
+				<PackageReference Include="AWSSDK.XRay" Version="3.7.0.36" />
+				<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.1" />
+				<PackageReference Include="Overleaf.Logging" Version="2.6.0" />
+				<PackageReference Include="Overleaf.Logging.Lambda" Version="2.6.0" />
+				<PackageReference Include="Overleaf.Lambda" Version="2.1.0" />
+				<PackageReference Include="Overleaf.Lambda.Authentication" Version="2.0.2" />
+				<PackageReference Include="Overleaf.Authentication.WebClient" Version="3.1.3" />
+				<PackageReference Include="Overleaf.Authentication.WebClient.Abstractions" Version="3.1.3" />				
+		</ItemGroup>
+		<ItemGroup>
+		  <ProjectReference Include="..\MiningService.Core\MiningService.Core.csproj" />
+		  <ProjectReference Include="..\MiningService.Infrastructure\MiningService.Infrastructure.csproj" />
+		</ItemGroup>
+		<ItemGroup>
+		  <None Update="config\addip\appsettings.json">
+		    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		  </None>
+		  <None Update="config\apikeyauthorizer\appsettings.json">
+		    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		  </None>
+		  <None Update="config\apikeyreplacementlambda\appsettings.json">
+		    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		  </None>
+		  <None Update="config\appsettings.dev.json">
+		    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		  </None>
+		  <None Update="config\appsettings.json">
+		    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		  </None>
+		  <None Update="config\appsettings.preprod.json">
+		    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		  </None>
+		  <None Update="config\appsettings.prod.json">
+		    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		  </None>
+		  <None Update="config\appsettings.sit.json">
+		    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		  </None>
+		  <None Update="config\appsettings.test.json">
+		    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		  </None>
+		  <None Update="config\deleteip\appsettings.json">
+		    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		  </None>
+		  <None Update="config\getallips\appsettings.json">
+		    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		  </None>
+		  <None Update="config\getip\appsettings.json">
+		    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		  </None>
+		</ItemGroup>
+		<ItemGroup>
+		  <Folder Include="config\addip\" />
+		  <Folder Include="config\getip\" />
+		  <Folder Include="config\deleteip\" />
+		</ItemGroup>
+</Project>

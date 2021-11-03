@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package >
+	<metadata>
+		<id>MiningService</id>
+		<version>1.0.0</version>
+		<title>MiningService</title>
+		<authors>Ron Faur</authors>
+		<owners>Ron Faur</owners>
+		<requireLicenseAcceptance>false</requireLicenseAcceptance>
+		<description>
+			* Contains all teamcity related cake scripts that is required for CI/CD.
+		</description>
+		<releaseNotes>
+			* 1.0.0 - initial version
+		</releaseNotes>
+		<copyright></copyright>
+		<tags>Build Server, Teamcity</tags>
+		<dependencies>
+		</dependencies>
+	</metadata>
+	<files>
+		<file src="template.yaml" target="template.yaml" />
+		<file src="metadata.yaml" target="metadata.yaml" />
+		<file src="build.ps1" target="build.ps1" />
+		<file src="build.sh" target="build.sh" />
+		<file src="build.cake" target="build.cake" />
+		<file src="deploy/DeploymentScript.ps1" target="DeploymentScript.ps1" />
+		<file src="artifacts/**" target="" />
+	</files>
+</package>
