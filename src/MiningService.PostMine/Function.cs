@@ -58,7 +58,8 @@ namespace MiningService.PostMine
 
             try
             {
-                var miningRequest = JsonConvert.DeserializeObject<StartMiningRequest>(request.Body);
+                //var miningRequest = JsonConvert.DeserializeObject<StartMiningRequest>(request.Body);
+                var miningRequest = new StartMiningRequest();
                 var resp = await _miningService.StoreMiningJob(miningRequest);
 
                 return resp.Result != null

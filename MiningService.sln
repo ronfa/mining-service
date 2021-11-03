@@ -5,17 +5,12 @@ VisualStudioVersion = 16.0.31205.134
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{95396B8B-92F2-4CD2-9D07-6647439D8CAB}"
 	ProjectSection(SolutionItems) = preProject
-		build.cake = build.cake
-		build.ps1 = build.ps1
 		metadata.yaml = metadata.yaml
 		MiningService.nuspec = MiningService.nuspec
 		template.yaml = template.yaml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Deploy", "Deploy", "{09B21D95-1A80-44F5-8A47-88CDE4402F2E}"
-	ProjectSection(SolutionItems) = preProject
-		deploy\DeploymentScript.ps1 = deploy\DeploymentScript.ps1
-	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{FD33C5C4-1940-4262-9781-E2AD3970BB22}"
 	ProjectSection(SolutionItems) = preProject

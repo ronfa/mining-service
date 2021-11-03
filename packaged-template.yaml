@@ -1,18 +1,17 @@
-AWSTemplateFormatVersion: "2010-09-09"
+AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: >
-  Mining Service
+Description: "Mining Service\n"
 Parameters:
   Environment:
     Type: String
     Default: dev
-    AllowedValues:  
-      - local
-      - dev
-      - test
-      - sit
-      - preprod
-      - prod
+    AllowedValues:
+    - local
+    - dev
+    - test
+    - sit
+    - preprod
+    - prod
     Description: Environment
   Platform:
     Type: String
@@ -36,10 +35,10 @@ Parameters:
     Description: Version information
   LambdaRoleArn:
     Type: String
-    Default: "arn:aws:iam::598396454095:role/mining-lambda-role"
+    Default: arn:aws:iam::598396454095:role/mining-lambda-role
   TableName:
     Type: String
-    Default: "miningjobs"
+    Default: miningjobs
   ReadCapacityUnits:
     Description: Provisioned read throughput
     Type: Number
@@ -54,88 +53,93 @@ Parameters:
     MinValue: '5'
     MaxValue: '10000'
     ConstraintDescription: must be between 5 and 10000
-  
 Globals:
   Function:
     Environment:
       Variables:
-        Application__Version: !Ref Version
-        Application__Environment: !Ref Environment
+        Application__Version:
+          Ref: Version
+        Application__Environment:
+          Ref: Environment
         Application__MachineName: Lambda
-        Application__System: !Ref System
-        Application__Subsystem: !Ref Subsystem
-        Application__Platform: !Ref Platform
-
+        Application__System:
+          Ref: System
+        Application__Subsystem:
+          Ref: Subsystem
+        Application__Platform:
+          Ref: Platform
 Resources:
-
   MiningTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: "dev-miningjobs"
+      TableName: dev-miningjobs
       AttributeDefinitions:
-        -
-          AttributeName: "JobId"
-          AttributeType: "S"
+      - AttributeName: JobId
+        AttributeType: S
       KeySchema:
-        -
-          AttributeName: "JobId"
-          KeyType: "HASH"
+      - AttributeName: JobId
+        KeyType: HASH
       ProvisionedThroughput:
-        ReadCapacityUnits: !Ref 'ReadCapacityUnits'
-        WriteCapacityUnits: !Ref 'WriteCapacityUnits'
-
+        ReadCapacityUnits:
+          Ref: ReadCapacityUnits
+        WriteCapacityUnits:
+          Ref: WriteCapacityUnits
   WebApi:
     Type: AWS::Serverless::Api
     Properties:
-      StageName: 'Dev'
+      StageName: Dev
       EndpointConfiguration: REGIONAL
       Cors:
         AllowMethods: "'GET,POST'"
       TracingEnabled: false
-
   PostEndpointFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Role: !Ref 'LambdaRoleArn'
+      Role:
+        Ref: LambdaRoleArn
       Runtime: dotnetcore3.1
       MemorySize: 1024
       Timeout: 10
-      CodeUri: ./artifacts/MiningService.PostMine.zip
-      Handler: "MiningService.PostMine::MiningService.PostMine.Function::FunctionHandler"
-      FunctionName: 'miningservice-postmine'
+      CodeUri: s3://mining-lambda-artifacts/c08376a0b5d0192334b30aee17ee1194
+      Handler: MiningService.PostMine::MiningService.PostMine.Function::FunctionHandler
+      FunctionName: miningservice-postmine
       Environment:
         Variables:
-          Application__Name: 'miningservice-postmine'
+          Application__Name: miningservice-postmine
       Events:
         AddMining:
           Type: Api
           Properties:
-            RestApiId: !Ref WebApi
+            RestApiId:
+              Ref: WebApi
             Path: /mine
             Method: POST
-
   GetEndpointFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Role: !Ref 'LambdaRoleArn'
+      Role:
+        Ref: LambdaRoleArn
       Runtime: dotnetcore3.1
       MemorySize: 1024
       Timeout: 20
-      CodeUri: ./artifacts/MiningService.GetMine.zip
-      Handler: "MiningService.GetMine::MiningService.GetMine.Function::FunctionHandler"
-      FunctionName: 'miningservice-getmine'
+      CodeUri: s3://mining-lambda-artifacts/d8aec9e018b52f78182ba1503775726f
+      Handler: MiningService.GetMine::MiningService.GetMine.Function::FunctionHandler
+      FunctionName: miningservice-getmine
       Environment:
         Variables:
-          Application__Name: 'miningservice-getmine'
+          Application__Name: miningservice-getmine
       Events:
         GetIp:
           Type: Api
           Properties:
-            RestApiId: !Ref WebApi
+            RestApiId:
+              Ref: WebApi
             Path: /mine
             Method: GET
-
 Outputs:
   MiningTableOutput:
-    Value: !GetAtt MiningTable.Arn
+    Value:
+      Fn::GetAtt:
+      - MiningTable
+      - Arn
     Description: Database ARN

@@ -5,8 +5,10 @@
 
 ## Prerequisites
 
-* Automation of deployment is done using AWS CLI, make sure one is installed locally 
+* Automation of deployment is done using AWS CLI, make sure it is installed locally 
 * Deployment scripts are available for Linux/OS X (build.sh) as well as powershell script for windows environments (build.ps1)
+* Obtain Access Key ID and Secret Access Key from your AWS account
+
 
 ## Solution Projects
 
@@ -22,10 +24,11 @@ The following projects are included in the solution:
 
 ## Build
 
-To run the build and deployment on windows machines execute the following in a powershell window:
+1. Edit the deploy.ps1 script and enter your AWS Access Key ID and Secret Access Key 
+2. To run the build and deployment on windows machines execute the following in a powershell window:
 
 ```sh
-build.ps1
+deploy.ps1
 ```
 
 ## MiningService.PostMine

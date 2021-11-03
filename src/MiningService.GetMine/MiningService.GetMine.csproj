@@ -26,4 +26,9 @@
 				<ProjectReference Include="..\MiningService.Core\MiningService.Core.csproj" />
 				<ProjectReference Include="..\MiningService.Infrastructure\MiningService.Infrastructure.csproj" />
 		</ItemGroup>
+		<ItemGroup>
+		  <None Update="appsettings.json">
+		    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		  </None>
+		</ItemGroup>
 </Project>
